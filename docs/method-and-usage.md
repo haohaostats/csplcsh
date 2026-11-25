@@ -95,4 +95,5 @@ estimated transformations to avoid validation leakage.
 
 Absolute log scores depend on the time unit. Comparisons require the same unit,
 patients, partition and follow-up rule. The package exposes the joint criterion;
-it does not bundle the paper's alternative scoring methods or patient datasets.
+it includes the processed melanoma application data. The paper's alternative
+scoring methods are not bundled.

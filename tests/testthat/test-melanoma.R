@@ -1,0 +1,15 @@
+test_that("bundled melanoma matches the application cohort", {
+  d <- csplcsh::melanoma
+  expect_equal(nrow(d), 205L)
+  expect_named(d, c("id", "time", "status", "age", "sex", "thick", "ulcer"))
+  expect_equal(as.integer(table(d$status)), c(134L, 57L, 14L))
+  expect_identical(d$id, seq_len(205L))
+  expect_false(anyNA(d))
+  expect_true(all(d$time > 0))
+  expect_equal(max(d$time), 5565 / 365.25)
+  expect_identical(levels(d$sex), c("female", "male"))
+  expect_identical(levels(d$ulcer), c("absent", "present"))
+  expect_equal(d$thick[1], log1p(6.76))
+  fit <- cspl_fit(~ age + thick + ulcer, d)
+  expect_true(all(is.finite(cspl_score(fit, d)$score)))
+})

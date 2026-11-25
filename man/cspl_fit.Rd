@@ -51,15 +51,7 @@ are not supported. Conditional independent censoring is assumed for the
 predictive likelihood interpretation.
 }
 \examples{
-set.seed(42)
-n <- 80
-x <- rnorm(n)
-t1 <- rexp(n, 0.1 * exp(0.4 * x))
-t2 <- rexp(n, 0.1)
-cens <- rexp(n, 0.05)
-d <- data.frame(time = pmin(t1, t2, cens),
-                status = ifelse(t1 < pmin(t2, cens), 1, ifelse(t2 < cens, 2, 0)),
-                x = x)
-fit <- cspl_fit(~ x, d)
-predict(fit, d[1:2, ], times = c(0, 1, 2))
+data("melanoma", package = "csplcsh")
+fit <- cspl_fit(~ age + thick + ulcer, melanoma)
+predict(fit, melanoma[1:3, ], times = c(0, 1, 3, 5))
 }

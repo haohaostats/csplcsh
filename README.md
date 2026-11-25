@@ -39,83 +39,69 @@ model differences to be traced to specific outcomes. The local increment constra
 preserves hazard mass; using the same hazard and its integral makes event densities
 and event-free survival compatible.
 
-## Quick start
+## Quick start: malignant melanoma
 
-Generate two competing events and independent censoring:
+The package includes `melanoma`, the paper-ready version of the same 205 patients
+from `boot::melanoma` used in the paper:
+57 melanoma deaths, 14 other-cause deaths, and 134 censored observations.
+The original source is the `boot` package ([data documentation](https://stat.ethz.ch/R-manual/R-devel/library/boot/html/melanoma.html)); the processed dataset is included in `csplcsh`.
+
+In the included dataset, follow-up has been converted from days to years and event status recoded as
+0 for censoring, 1 for melanoma death, and 2 for other-cause death.
+Tumour thickness is entered as `log(1 + thickness)`; the reference categories
+are female sex and absent ulceration.
 
 ```r
 library(csplcsh)
-set.seed(2026)
-n <- 180L
-x <- rnorm(n)
-z <- rnorm(n)
-t1 <- rexp(n, 0.1 * exp(0.5 * x))
-t2 <- rexp(n, 0.1 * exp(-0.5 * z))
-cens <- rexp(n, 0.08)
-dat <- data.frame(
-  time = pmin(t1, t2, cens),
-  status = ifelse(t1 < pmin(t2, cens), 1L, ifelse(t2 < cens, 2L, 0L)),
-  x = x, z = z
-)
+data("melanoma", package = "csplcsh")
+dat <- melanoma
 ```
-
-Here `status = 0` means censoring; `1` and `2` identify the event causes. Time is
-measured in years in this example. Use a consistent time unit for all candidates.
 
 ### Fit and predict
 
-```r
-fit <- cspl_fit(~ x + z, dat)
-predict(fit, dat[1:3, ], times = c(0, 1, 3, 5), type = "survival")
+Model M13 includes age, log-transformed tumour thickness and ulceration.
+The same predictors are fitted separately for the two causes.
 
-fit_by_cause <- cspl_fit(list(`1` = ~ x, `2` = ~ z), dat)
+```r
+fit <- cspl_fit(~ age + thick + ulcer, dat)
+predict(fit, dat[1:3, ], times = c(0, 1, 3, 5), type = "survival")
 ```
 
 `predict()` returns survival as a patient-by-time matrix. Types `"hazard"`,
 `"cumhaz"`, and `"density"` return patient-by-time-by-cause arrays.
-Density is $h_j(t\mid x)S(t\mid x)$; it is not cumulative incidence.
 
-### Compare models on shared folds
+### Compare models and decompose their scores
+
+Compare M13 with M10, which includes thickness and ulceration. This isolates
+the predictive contribution of adding age. The example uses the paper's
+20 repetitions of stratified 10-fold cross-validation and the same partition seeds.
 
 ```r
-folds <- cspl_folds(dat$status, nfold = 5, seed = 27)
+candidates <- list(M13 = ~ age + thick + ulcer, M10 = ~ thick + ulcer)
 comparison <- cspl_compare(
-  list(both = ~ x + z, target_only = ~ x),
-  data = dat,
-  folds = folds
+  candidates, dat,
+  nfold = 10, repeats = 20, seed = 20261202
 )
 comparison
 comparison$cause_scores
 ```
 
-The example gives approximately:
+| Model | Predictors | Mean CSPL–CSH | SE | Difference from M13 | Paired SE |
+|:--|:--|--:|--:|--:|--:|
+| M13 | Age, thickness, ulceration | -1.4608 | 0.0519 | 0.0000 | 0.0000 |
+| M10 | Thickness, ulceration | -1.4895 | 0.0540 | -0.0288 | 0.0159 |
 
-| Model | Mean CSPL–CSH | SE | Difference from leader | Paired SE |
-|:--|--:|--:|--:|--:|
-| both | -2.4150 | 0.0518 | 0.0000 | 0.0000 |
-| target_only | -2.4517 | 0.0721 | -0.0367 | 0.0431 |
+The mean cause-specific contributions are:
 
-The mean cause contributions are:
-
-| Model | Cause 1 | Cause 2 |
+| Model | Melanoma death | Other-cause death |
 |:--|--:|--:|
-| both | -1.2943 | -1.1207 |
-| target_only | -1.2922 | -1.1595 |
+| M13 | -1.0945 | -0.3663 |
+| M10 | -1.0916 | -0.3979 |
 
-In this generated example, the improvement is attributable to the competing cause.
-These are tutorial results, not the simulation or application results in the paper.
-
-For repeated cross-validation, generate common partitions internally:
-
-```r
-comparison <- cspl_compare(
-  list(both = ~ x + z, target_only = ~ x), dat,
-  nfold = 10, repeats = 20, seed = 2026
-)
-```
-
-Alternatively pass a list of precomputed fold vectors. Every candidate uses every
-partition and the same patients. A failed fit stops the comparison.
+Adding age improves the other-cause contribution by approximately 0.0316,
+with a small decrease in the melanoma contribution. The resulting gain in
+the joint score is approximately 0.0288. These values reproduce the
+corresponding comparison in the paper.
 
 ## Main functions
 

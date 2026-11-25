@@ -12,6 +12,7 @@ Description: Fits cause-specific Cox models with locally rescaled,
     cross-validation, and paired model comparison for competing risks.
 License: MIT + file LICENSE
 Encoding: UTF-8
+LazyData: true
 Depends: R (>= 4.3.0)
 Imports: survival, stats, utils
 Suggests: testthat (>= 3.0.0)
