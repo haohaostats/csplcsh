@@ -16,8 +16,7 @@ remotes::install_github("haohaostats/csplcsh")
 library(csplcsh)
 ```
 
-Requires R >= 4.3 and the recommended package `survival`. No compiled code is needed.
-This is a GitHub package; it is not currently distributed on CRAN.
+Requires R >= 4.3 and the recommended package `survival`.
 
 ## Method
 
