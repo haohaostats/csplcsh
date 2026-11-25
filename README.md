@@ -6,10 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 
 `csplcsh` compares complete cause-specific Cox models through the joint prediction
-of first-event time and cause, including event-free survival. It implements
-**CSPL–CSH**, described in the manuscript by **Hao Chen and Clara Grazian**:
-
-> *Coherent Smoothed Predictive Likelihood for Competing Risks Model Comparison*
+of first-event time and cause, including event-free survival.
 
 ## Installation
 
