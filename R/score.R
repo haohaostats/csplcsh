@@ -17,44 +17,6 @@
   formulas
 }
 
-# Fit cause-specific Cox models and CSPL baselines on a training set
-#' Fit coherent cause-specific Cox prediction models
-#'
-#' @param formulas One one-sided formula used for all causes, or one formula
-#'   per cause. Unnamed lists follow `causes`; named lists use cause codes.
-#' @param data Nonempty data frame, one row per independent subject.
-#' @param causes Positive numeric event codes. NULL uses all observed causes.
-#' @param time,status Names of follow-up and event-status columns. Follow-up must
-#'   be finite and strictly positive. Status 0 denotes censoring; positive codes
-#'   denote mutually exclusive causes. Missing outcomes or model predictors are
-#'   not allowed.
-#' @param k Number of neighbours on each side; see [cspl_baseline()].
-#' @param tail Extrapolation policy, `"error"` (default) or `"constant"`.
-#' @param order Gauss-Legendre quadrature order; default 32.
-#' @return A `cspl_fit` object with `fits` (Cox fits), `baselines` (adjusted
-#'   baselines), `raw` (Breslow cumulative hazards), `causes`, `formulas`,
-#'   outcome column names, and the training endpoint `tau`.
-#' @details Fits use Breslow ties, uncentred baseline hazards, and linear
-#'   predictors referenced to zero. Each cause must have an observed event in
-#'   the training set. Cox convergence warnings should be investigated.
-#'   This interface supports ordinary right-censored, time-fixed proportional
-#'   hazards models, including interactions and transformed covariates.
-#'   Offsets, strata, clusters, frailty, delayed entry and time-varying effects
-#'   are not supported. Conditional independent censoring is assumed for the
-#'   predictive likelihood interpretation.
-#' @examples
-#' set.seed(42)
-#' n <- 80
-#' x <- rnorm(n)
-#' t1 <- rexp(n, 0.1 * exp(0.4 * x))
-#' t2 <- rexp(n, 0.1)
-#' cens <- rexp(n, 0.05)
-#' d <- data.frame(time = pmin(t1, t2, cens),
-#'                 status = ifelse(t1 < pmin(t2, cens), 1, ifelse(t2 < cens, 2, 0)),
-#'                 x = x)
-#' fit <- cspl_fit(~ x, d)
-#' predict(fit, d[1:2, ], times = c(0, 1, 2))
-#' @export
 cspl_fit <- function(formulas, data, causes = NULL, time = "time", status = "status",
                      k = 5L, tail = "error", order = 32) {
   .cspl_data(data, time, status)
@@ -91,7 +53,6 @@ cspl_fit <- function(formulas, data, causes = NULL, time = "time", status = "sta
             class = "cspl_fit")
 }
 
-# Relative risk exp(x'beta) on the zero reference, matching basehaz(centered=FALSE)
 cspl_risk <- function(object, newdata, cause) {
   fit <- object$fits[[as.character(cause)]]
   if (length(stats::coef(fit)) == 0) return(rep(1, nrow(newdata)))
@@ -101,16 +62,6 @@ cspl_risk <- function(object, newdata, cause) {
   r
 }
 
-# Apply the tail rule to a held-out set (likelihood criteria only)
-#' Apply the training-endpoint evaluation rule
-#'
-#' @param test Data frame containing follow-up and status columns.
-#' @param tau Positive finite training endpoint.
-#' @param time,status Names of follow-up and status columns.
-#' @return A data frame in which follow-up beyond `tau` is truncated and marked
-#'   censored (status 0). Attribute `n_truncated` counts the affected subjects.
-#' @details An event exactly at `tau` retains its event status.
-#' @export
 cspl_truncate <- function(test, tau, time = "time", status = "status") {
   .cspl_data(test, time, status)
   .cspl_scalar(tau, "tau", positive = TRUE)
@@ -121,20 +72,6 @@ cspl_truncate <- function(test, tau, time = "time", status = "status") {
   test
 }
 
-# Per-subject held-out CSPL-CSH score, split by cause:
-#   component_j = I(J = j) log h_j(T | x) - H_j(T | x);  score = sum_j component_j
-#' Evaluate subject-level joint predictive log scores
-#'
-#' @param object A fitted object from [cspl_fit()].
-#' @param test Data frame containing the fitted predictors and outcome columns.
-#' @return A list with `score` (one joint log score per subject) and `components`
-#'   (patient-by-cause matrix). Row sums of components equal the joint score.
-#' @details Cause j contributes I(D=j) log(h_j(T|x)) - H_j(T|x).
-#'   A censored observation contributes only negative cumulative hazards.
-#'   Larger mean scores are preferred. This function does not truncate outcomes
-#'   automatically: use [cspl_truncate()] before scoring an external test set
-#'   according to the training-endpoint rule, or use [cspl_cv()].
-#' @export
 cspl_score <- function(object, test) {
   .cspl_data(test, object$time, object$status)
   t <- test[[object$time]]; s <- test[[object$status]]
@@ -155,18 +92,6 @@ cspl_score <- function(object, test) {
   list(score = rowSums(comp), components = comp)
 }
 
-# Status-stratified fold assignment (same rule as the DGLAS prototype)
-#' Generate status-stratified cross-validation folds
-#'
-#' @param status Numeric status vector, with 0 for censoring and positive causes.
-#' @param nfold Integer number of nonempty folds, at least 2.
-#' @param seed Integer seed for reproducible assignments.
-#' @return An integer fold vector, in the original patient order.
-#' @details The random number state is restored after partition generation.
-#'   Within each status, subjects are shuffled then assigned cyclically.
-#'   Verify enough events remain in each training set; [cspl_cv()] fails if a
-#'   training set has no event for any modelled cause.
-#' @export
 cspl_folds <- function(status, nfold = 10L, seed = 1L) {
   .cspl_scalar(nfold, "nfold", integer = TRUE, positive = TRUE)
   if (nfold < 2L || nfold > length(status)) stop("nfold must be between 2 and sample size")
@@ -189,17 +114,6 @@ cspl_folds <- function(status, nfold = 10L, seed = 1L) {
   out
 }
 
-# Patient-weighted mean and delete-one-fold jackknife SE
-#' Summarize held-out scores by a delete-one-fold jackknife
-#'
-#' @param scores Finite subject-level scores or paired score differences.
-#' @param folds A fold vector, one entry per subject, with at least two folds.
-#' @return List with patient-weighted mean `Lhat`, jackknife `se`, `fold_means`,
-#'   number of folds `R`, and sample size `n`.
-#' @details Deletions operate on stored held-out scores without refitting models.
-#'   Unequal fold sizes retain patient weights. The SE describes variability of
-#'   fold-grouped scores, not full training or model-selection uncertainty.
-#' @export
 cspl_jackknife <- function(scores, folds) {
   if (!is.numeric(scores) || !length(scores) || any(!is.finite(scores)))
     stop("scores must be a finite numeric vector")
@@ -213,24 +127,6 @@ cspl_jackknife <- function(scores, folds) {
   list(Lhat = L, se = sqrt(var_jk), fold_means = tot / nr, R = R, n = n)
 }
 
-# Cross-validated CSPL-CSH for one candidate
-#' Cross-validate a candidate using the joint predictive log score
-#'
-#' @param formulas Candidate specification accepted by [cspl_fit()].
-#' @param data Data frame with one row per subject.
-#' @param folds Fold vector with one entry per subject; at least two nonempty folds.
-#' @param causes Event codes, or NULL to use all observed causes.
-#' @param k Number of neighbours on each side.
-#' @param tail `"error"` (default) applies training-endpoint truncation within
-#'   each validation fold. `"constant"` instead uses explicit constant-hazard
-#'   extrapolation and does not truncate outcomes.
-#' @param time,status Names of follow-up and status columns.
-#' @param order Gauss-Legendre quadrature order.
-#' @return The output of [cspl_jackknife()] plus subject-level `scores`,
-#'   cause-specific `components`, and total count `n_truncated`.
-#' @details Supply identical folds when comparing models. A failing fold stops
-#'   evaluation. [cspl_compare()] supports repeated, paired comparisons.
-#' @export
 cspl_cv <- function(formulas, data, folds, causes = NULL, k = 5L, tail = "error",
                     time = "time", status = "status", order = 32) {
   .cspl_data(data, time, status)

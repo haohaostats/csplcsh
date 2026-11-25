@@ -1,30 +1,3 @@
-#' Compare candidates using shared, optionally repeated cross-validation
-#'
-#' @param candidates Named list of candidate specifications. Each entry is one
-#'   one-sided formula shared by all causes, or a list of formulas per cause.
-#' @param data Analysis data, one row per subject.
-#' @param folds One fold vector or a list of vectors (one per repetition).
-#'   If NULL, stratified partitions are generated using `seed + r - 1`.
-#' @param nfold Number of folds for generated partitions.
-#' @param repeats Number of generated partitions. Ignored when folds are supplied.
-#' @param seed Nonnegative integer seed for the first generated partition.
-#' @param causes Positive numeric event codes; NULL uses all observed causes.
-#' @param k Number of neighbours on each side, as in [cspl_baseline()].
-#' @param time,status Names of follow-up and status columns.
-#' @param order Gauss-Legendre quadrature order.
-#' @return A `cspl_comparison` object with `summary`, `cause_scores`,
-#'   `partitions`, `folds`, `causes`, and `reference`. Summary rows are sorted by
-#'   decreasing mean score. Differences equal candidate minus the overall leader;
-#'   paired SEs average within-partition jackknife SEs of individual differences.
-#' @details Larger scores are preferred. Repetitions use common folds for every
-#'   candidate. Scores are patient means; reported SEs average delete-one-fold
-#'   jackknife SEs across partitions, not the SD or SE across repetitions.
-#'   They describe variability of fold-grouped held-out scores, not full
-#'   uncertainty from training and model selection. Exact first-place ties use
-#'   original candidate order. Training-endpoint truncation is applied in each
-#'   fold. All causes must have events in every training set; errors stop the
-#'   whole comparison so every candidate uses the same observations.
-#' @export
 cspl_compare <- function(candidates, data, folds = NULL, nfold = 10L,
                          repeats = 1L, seed = 1L, causes = NULL, k = 5L,
                          time = "time", status = "status", order = 32) {
@@ -70,7 +43,6 @@ cspl_compare <- function(candidates, data, folds = NULL, nfold = 10L,
                  reference = nm[best]), class = "cspl_comparison")
 }
 
-#' @export
 print.cspl_comparison <- function(x, ...) {
   cat("CSPL-CSH model comparison (higher scores preferred)
 ")

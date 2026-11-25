@@ -43,7 +43,6 @@ Neither alone establishes optimal predictive performance for estimated models.
 ## Custom outcomes and cause-specific formulas
 
 ```r
-# dat has follow-up 'years', numeric outcome 'event', and covariates x and z.
 fit <- cspl_fit(list(`1` = ~ x, `2` = ~ z), dat,
                 time = "years", status = "event")
 folds <- cspl_folds(dat$event, 5, seed = 27)

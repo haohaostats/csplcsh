@@ -1,4 +1,3 @@
-# Validation at public boundaries; the numerical construction is unchanged.
 .cspl_scalar <- function(x, name, integer = FALSE, positive = FALSE) {
   if (!is.numeric(x) || length(x) != 1L || !is.finite(x) ||
       (integer && (x != floor(x) || abs(x) > .Machine$integer.max)) ||

@@ -1,6 +1,5 @@
 library(csplcsh)
 
-# Two competing event times and independent censoring, measured in years.
 set.seed(2026)
 n <- 180L
 x <- rnorm(n)
@@ -22,6 +21,5 @@ comparison <- cspl_compare(
 print(comparison)
 print(comparison$cause_scores)
 
-# Different predictor sets for each cause: names are the event codes.
 fit_by_cause <- cspl_fit(list(`1` = ~ x, `2` = ~ z), dat)
 print(fit_by_cause)

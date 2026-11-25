@@ -14,7 +14,7 @@ of first-event time and cause, including event-free survival. It implements
 ## Installation
 
 ```r
-install.packages("remotes")                 # once, if needed
+install.packages("remotes")
 remotes::install_github("haohaostats/csplcsh")
 library(csplcsh)
 ```
@@ -72,7 +72,6 @@ measured in years in this example. Use a consistent time unit for all candidates
 fit <- cspl_fit(~ x + z, dat)
 predict(fit, dat[1:3, ], times = c(0, 1, 3, 5), type = "survival")
 
-# Different predictor sets for each cause:
 fit_by_cause <- cspl_fit(list(`1` = ~ x, `2` = ~ z), dat)
 ```
 

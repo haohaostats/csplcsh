@@ -1,17 +1,3 @@
-#' Predict coherent hazards, cumulative hazards, survival or event densities
-#'
-#' @param object A fitted object from [cspl_fit()].
-#' @param newdata A nonempty data frame containing the fitted predictors.
-#' @param times Finite, nonnegative evaluation times, in the training time unit.
-#' @param type One of `survival`, `hazard`, `cumhaz`, or `density`.
-#' @param ... Reserved for future use.
-#' @return For survival, a patient-by-time matrix. Otherwise a
-#'   patient-by-time-by-cause array. Dimensions are retained for singletons.
-#' @details Survival is exp(-sum_j H_j); density for cause j is h_j times
-#'   survival. These are instantaneous densities, not cumulative incidences.
-#'   Default fits reject predictions beyond the training endpoint. A fit with
-#'   `tail = "constant"` explicitly extrapolates each terminal hazard.
-#' @export
 predict.cspl_fit <- function(object, newdata, times,
                              type = c("survival", "hazard", "cumhaz", "density"), ...) {
   type <- match.arg(type)
@@ -33,7 +19,6 @@ predict.cspl_fit <- function(object, newdata, times,
          density = sweep(h, c(1L, 2L), S, "*"))
 }
 
-#' @export
 print.cspl_fit <- function(x, ...) {
   cat("CSPL-CSH fit
 ")
