@@ -1,0 +1,7 @@
+bibentry(
+  bibtype = "Unpublished",
+  title = "Coherent Smoothed Predictive Likelihood for Competing Risks Model Comparison",
+  author = c(person("Hao", "Chen"), person("Clara", "Grazian")),
+  note = "Manuscript in preparation; csplcsh R package",
+  url = "https://github.com/haohaostats/csplcsh"
+)

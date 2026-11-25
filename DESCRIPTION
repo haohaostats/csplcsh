@@ -1,0 +1,22 @@
+Package: csplcsh
+Title: Coherent Smoothed Predictive Likelihood for Competing Risks
+Version: 0.1.0
+Authors@R: c(
+    person("Hao", "Chen", email = "hche2036@uni.sydney.edu.au",
+           role = c("aut", "cre")),
+    person("Clara", "Grazian", role = "aut"))
+Description: Fits cause-specific Cox models with locally rescaled,
+    nearest-neighbour smoothed baseline hazards. Cumulative hazards are
+    obtained by integrating the same adjusted hazards. Provides held-out
+    joint log scores, cause-specific score decomposition, shared-fold
+    cross-validation, and paired model comparison for competing risks.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.3.0)
+Imports: survival, stats, utils
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
+URL: https://github.com/haohaostats/csplcsh
+BugReports: https://github.com/haohaostats/csplcsh/issues
+RoxygenNote: 7.3.3
+Roxygen: list(markdown = TRUE)
